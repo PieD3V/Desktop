@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>XP Web Desktop</title>
+<style>
+/* ================== GENERAL ================== */
+body {
+    margin: 0;
+    font-family: Tahoma, sans-serif;
+    overflow: hidden;
+    user-select: none;
+    background: black;
+}
+
+/* ================== BOOT SCREEN ================== */
+#bootScreen {
+    position: fixed;
+    top:0; left:0; width:100%; height:100%;
+    background: url("Icons/BootScreen.png") no-repeat center center;
+    background-size: cover;
+    z-index: 5000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+    padding-bottom: 50px;
+    cursor: pointer;
+}
+
+/* ================== DESKTOP ================== */
+#desktop {
+    padding: 20px;
+    color: white;
+    display: none;
+    flex-direction: column;
+    position: relative;
+    height: calc(100vh - 40px);
+    background: url("Icons/background.png") no-repeat center center fixed;
+    background-size: cover;
+}
+
+/* ================== SELECTION BOX ================== */
+.selection-box {
+    position: absolute;
+    border: 1px solid #3399ff;
+    background: rgba(51,153,255,0.25);
+    pointer-events: none;
+    display: none;
+}
+
+/* ================== DESKTOP ICONS ================== */
+.icon {
+    width: 80px;
+    text-align: center;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+.icon:hover { 
+    background: rgba(255,255,255,0.2); 
+    border: 1px dotted white; 
+}
+.icon img { width:48px;height:48px; pointer-events:none;}
+.icon span { display:block;margin-top:5px;font-size:14px;pointer-events:none; }
+
+/* ================== TASKBAR ================== */
+.taskbar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 40px;
+    background: linear-gradient(to bottom, #3a6ea5 0%, #245edb 40%, #1b3f91 100%);
+    display: flex;
+    align-items: center;
+    padding: 0 5px;
+    border-top: 1px solid #0c2c84;
+    z-index: 1000;
+}
+.start-btn {
+    display: flex; align-items:center; gap:6px;
+    background: linear-gradient(to bottom, #5fd35f 0%, #3cb043 50%, #2e8b2e 100%);
+    color:white; font-weight:bold; font-style:italic;
+    padding:5px 18px; border-radius:20px; border:1px solid #1e6f1e;
+    cursor:pointer;font-size:15px;
+}
+.clock {margin-left:auto;margin-right:15px;color:white;font-weight:bold;}
+
+/* ================== WINDOWS ================== */
+.window {
+    width: 400px;
+    background:#ece9d8;
+    border:2px solid #245edb;
+    position:absolute;
+    top:100px; left:100px;
+    display:none;
+    box-shadow:5px 5px 15px rgba(0,0,0,0.6);
+}
+.title-bar {
+    background: linear-gradient(to right,#245edb,#3a6ea5);
+    color:white;padding:5px;font-weight:bold;
+    display:flex;justify-content:space-between;cursor:move;
+}
+.close-btn {background:red;padding:0 8px;cursor:pointer;}
+.window-content {padding:15px;}
+
+/* ================== PROJECT ICONS ================== */
+.project-icon {
+    display:inline-block;width:60px;margin:5px;text-align:center;cursor:pointer;
+}
+.project-icon img {width:48px;height:48px;}
+.project-icon span {display:block;font-size:12px;}
+</style>
+</head>
+<body>
+
+<!-- BOOT SCREEN -->
+<div id="bootScreen">
+    <p>Click to Start</p>
+</div>
+
+<!-- DESKTOP -->
+<div id="desktop">
+    <div class="selection-box" id="selectionBox"></div>
+</div>
+
+<!-- TASKBAR -->
+<div class="taskbar" id="taskbar">
+    <div class="start-btn" id="startBtn">Start</div>
+    <div class="clock" id="clock"></div>
+</div>
+
+<!-- AUDIO -->
+<audio id="clickAudio" src="Sounds/click.mp3" preload="auto"></audio>
+<audio id="bootAudio" src="Sounds/BootSound.mp3" preload="auto"></audio>
+
+<script>
+let zIndexCounter = 10;
+const desktop = document.getElementById("desktop");
+const bootScreen = document.getElementById("bootScreen");
+const clickAudio = document.getElementById("clickAudio");
+const bootAudio = document.getElementById("bootAudio");
+
+/* ================== BOOT SEQUENCE ================== */
+bootScreen.addEventListener("click", () => {
+    bootAudio.play().catch(()=>console.log("Autoplay prevented")); // safety
+    bootScreen.style.display = "none";
+    desktop.style.display = "flex";
+    document.getElementById("taskbar").style.display = "flex";
+});
+
+/* ================== DESKTOP ICONS ================== */
+const folders = [
+    {name:"My Computer", content:"<p>Welcome!</p>"},
+    {name:"Projects", content:""}
+];
+
+folders.forEach((folder,index)=>{
+    const id = "window"+index;
+    // desktop icon
+    const icon = document.createElement("div");
+    icon.className = "icon";
+    icon.innerHTML = `<img src="Icons/folder.png"><span>${folder.name}</span>`;
+    icon.onclick = () => {
+        openWindow(id); playClickSound();
+        if(folder.name==="Projects") loadProjects(id);
+    };
+    desktop.appendChild(icon);
+
+    // window
+    const win = document.createElement("div");
+    win.className = "window";
+    win.id = id;
+    win.innerHTML = `<div class="title-bar">${folder.name}<div class="close-btn">X</div></div>
+                     <div class="window-content" id="${id}-content">${folder.content}</div>`;
+    document.body.appendChild(win);
+    win.querySelector(".close-btn").onclick = () => { closeWindow(id); playClickSound(); };
+    makeDraggable(win);
+});
+
+/* ================== PROJECTS ================== */
+const projects = [
+    {name:"Pixel Monkeys", icon:"Icons/pixel_monkeys.png", content:"<p>PixelMonkeys, my main project you can find it on the meta store!</p>"}
+];
+
+function loadProjects(windowId){
+    const container = document.getElementById(`${windowId}-content`);
+    container.innerHTML = "";
+    projects.forEach(proj => {
+        const div = document.createElement("div");
+        div.className = "project-icon";
+        div.innerHTML = `<img src="${proj.icon}"><span>${proj.name}</span>`;
+        div.onclick = () => openProjectWindow(proj);
+        container.appendChild(div);
+    });
+}
+
+function openProjectWindow(proj){
+    const winId = "project-"+proj.name.replace(/\s/g,'');
+    let win = document.getElementById(winId);
+    if(!win){
+        win = document.createElement("div");
+        win.className = "window";
+        win.id = winId;
+        win.innerHTML = `<div class="title-bar">${proj.name}<div class="close-btn">X</div></div>
+                         <div class="window-content">${proj.content}</div>`;
+        document.body.appendChild(win);
+        win.querySelector(".close-btn").onclick = ()=>{ closeWindow(winId); playClickSound(); };
+        makeDraggable(win);
+    }
+    win.style.display = "block";
+    bringToFront(win);
+    playClickSound();
+}
+
+/* ================== START BUTTON ================== */
+document.getElementById("startBtn").onclick = () => {
+    alert("Start menu coming soon!");
+    playClickSound();
+};
+
+/* ================== CLICK SOUND ================== */
+function playClickSound(){
+    const clone = clickAudio.cloneNode();
+    clone.playbackRate = 0.9 + Math.random()*0.2;
+    clone.volume = 0.4;
+    clone.play();
+}
+
+/* ================== SELECTION BOX ================== */
+const selectionBox = document.getElementById("selectionBox");
+let startX, startY, isSelecting = false;
+
+desktop.addEventListener("mousedown",(e)=>{
+    if(e.target!==desktop) return;
+    isSelecting=true;
+    startX=e.offsetX; startY=e.offsetY;
+    selectionBox.style.left=startX+"px";
+    selectionBox.style.top=startY+"px";
+    selectionBox.style.width="0px";
+    selectionBox.style.height="0px";
+    selectionBox.style.display="block";
+});
+desktop.addEventListener("mousemove",(e)=>{
+    if(!isSelecting) return;
+    const currentX = e.offsetX, currentY = e.offsetY;
+    const width = currentX-startX, height=currentY-startY;
+    selectionBox.style.width = Math.abs(width)+"px";
+    selectionBox.style.height = Math.abs(height)+"px";
+    selectionBox.style.left = (width<0?currentX:startX)+"px";
+    selectionBox.style.top = (height<0?currentY:startY)+"px";
+});
+desktop.addEventListener("mouseup",()=>{ isSelecting=false; selectionBox.style.display="none"; });
+
+/* ================== WINDOW FUNCTIONS ================== */
+function openWindow(id){ const win=document.getElementById(id); win.style.display="block"; bringToFront(win); }
+function closeWindow(id){ document.getElementById(id).style.display="none"; }
+function bringToFront(el){ zIndexCounter++; el.style.zIndex=zIndexCounter; }
+
+function makeDraggable(win){
+    const titleBar = win.querySelector(".title-bar");
+    let offsetX=0, offsetY=0, dragging=false;
+    titleBar.addEventListener("mousedown",(e)=>{
+        dragging=true; bringToFront(win);
+        offsetX = e.clientX - win.offsetLeft;
+        offsetY = e.clientY - win.offsetTop;
+    });
+    document.addEventListener("mousemove",(e)=>{ if(dragging){ win.style.left=(e.clientX-offsetX)+"px"; win.style.top=(e.clientY-offsetY)+"px"; }});
+    document.addEventListener("mouseup",()=>{ dragging=false; });
+}
+
+/* ================== CLOCK ================== */
+function updateClock(){
+    const now = new Date();
+    document.getElementById("clock").innerText = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+setInterval(updateClock,1000);
+updateClock();
+</script>
+
+</body>
+</html>
