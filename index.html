@@ -2,263 +2,534 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>XP Web Desktop</title>
+<title>PieDevs Desktop</title>
+
 <style>
-body {
-    margin: 0;
-    font-family: Tahoma, sans-serif;
-    overflow: hidden;
-    user-select: none;
-    background: url("Icons/background.png") no-repeat center center fixed;
-    background-size: cover;
+body{
+    margin:0;
+    font-family:Tahoma,sans-serif;
+    overflow:hidden;
+    user-select:none;
+    background:url("Icons/background.png") no-repeat center center fixed;
+    background-size:cover;
 }
 
-#bootScreen {
-    position: fixed;
-    top:0; left:0; width:100%; height:100%;
-    background: url("Icons/BootScreen.png") no-repeat center center;
-    background-size: cover;
-    z-index: 5000;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 20px;
-    padding-bottom: 50px;
-    cursor: default;
-    transition: opacity 1s ease;
+#bootScreen{
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:url("Icons/BootScreen.png") no-repeat center center;
+    background-size:cover;
+    z-index:99999;
+    opacity:1;
+    transition:opacity 1s ease;
 }
 
-#desktop {
-    padding: 20px;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    height: calc(100vh - 40px);
+#desktop{
+    padding:20px;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    height:calc(100vh - 40px);
 }
 
-.selection-box {
-    position: absolute;
-    border: 1px solid #3399ff;
-    background: rgba(51,153,255,0.25);
-    pointer-events: none;
-    display: none;
+.icon{
+    width:80px;
+    text-align:center;
+    margin-bottom:20px;
+    cursor:pointer;
+}
+.icon:hover{
+    background:rgba(255,255,255,0.2);
+    border:1px dotted white;
+}
+.icon img{
+    width:48px;
+    height:48px;
+    pointer-events:none;
+}
+.icon span{
+    display:block;
+    margin-top:5px;
+    font-size:14px;
+    pointer-events:none;
+    text-shadow:1px 1px 2px black;
 }
 
-.icon {
-    width: 80px;
-    text-align: center;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-.icon:hover { 
-    background: rgba(255,255,255,0.2); 
-    border: 1px dotted white; 
-}
-.icon img { width:48px;height:48px; pointer-events:none;}
-.icon span { display:block;margin-top:5px;font-size:14px;pointer-events:none; }
-
-.taskbar {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    height: 40px;
-    background: linear-gradient(to bottom, #3a6ea5 0%, #245edb 40%, #1b3f91 100%);
-    display: flex;
-    align-items: center;
-    padding: 0 5px;
-    border-top: 1px solid #0c2c84;
-    z-index: 1000;
-}
-.start-btn {
-    display: flex; align-items:center; gap:6px;
-    background: linear-gradient(to bottom, #5fd35f 0%, #3cb043 50%, #2e8b2e 100%);
-    color:white; font-weight:bold; font-style:italic;
-    padding:5px 18px; border-radius:20px; border:1px solid #1e6f1e;
-    cursor:pointer;font-size:15px;
-}
-.clock {margin-left:auto;margin-right:15px;color:white;font-weight:bold;}
-
-.window {
-    width: 400px;
-    background:#ece9d8;
-    border:2px solid #245edb;
+.selection-box{
     position:absolute;
-    top:100px; left:100px;
+    border:1px solid #3399ff;
+    background:rgba(51,153,255,0.25);
+    pointer-events:none;
+    display:none;
+}
+
+.taskbar{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    height:40px;
+    background:linear-gradient(to bottom,#3a6ea5 0%,#245edb 40%,#1b3f91 100%);
+    display:flex;
+    align-items:center;
+    padding:0 5px;
+    border-top:1px solid #0c2c84;
+    z-index:1000;
+}
+
+.start-btn{
+    background:linear-gradient(to bottom,#5fd35f 0%,#3cb043 50%,#2e8b2e 100%);
+    color:white;
+    font-weight:bold;
+    font-style:italic;
+    padding:5px 18px;
+    border-radius:0 15px 15px 0;
+    border:1px solid #1e6f1e;
+    cursor:pointer;
+}
+.start-btn.active{
+    filter:brightness(1.2);
+}
+
+.clock{
+    margin-left:auto;
+    margin-right:10px;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+    padding:5px;
+}
+.clock:hover{
+    background:rgba(255,255,255,0.1);
+}
+
+.start-menu{
+    position:fixed;
+    bottom:40px;
+    left:2px;
+    width:300px;
+    background:#fff;
+    border:2px solid #245edb;
+    border-radius:8px 8px 0 0;
+    box-shadow:4px 4px 15px rgba(0,0,0,0.5);
+    transform:translateY(20px);
+    opacity:0;
+    pointer-events:none;
+    transition:all 0.2s ease;
+    z-index:2000;
+}
+.start-menu.open{
+    transform:translateY(0);
+    opacity:1;
+    pointer-events:auto;
+}
+.start-header{
+    background:linear-gradient(to bottom,#1b5ad3,#3a83e6);
+    padding:10px;
+    color:white;
+}
+.menu-item{
+    padding:8px;
+    font-size:12px;
+    cursor:pointer;
+}
+.menu-item:hover{
+    background:#316ac5;
+    color:white;
+}
+
+.window{
+    width:400px;
+    background:#ece9d8;
+    border:3px solid #245edb;
+    border-radius:8px 8px 0 0;
+    position:absolute;
+    top:100px;
+    left:100px;
     display:none;
     box-shadow:5px 5px 15px rgba(0,0,0,0.6);
 }
-.title-bar {
-    background: linear-gradient(to right,#245edb,#3a6ea5);
-    color:white;padding:5px;font-weight:bold;
-    display:flex;justify-content:space-between;cursor:move;
-}
-.close-btn {background:red;padding:0 8px;cursor:pointer;}
-.window-content {padding:15px;}
 
-.project-icon {
-    display:inline-block;width:60px;margin:5px;text-align:center;cursor:pointer;
+.title-bar{
+    background:linear-gradient(to right,#245edb,#3a6ea5);
+    color:white;
+    padding:5px;
+    font-weight:bold;
+    display:flex;
+    justify-content:space-between;
+    cursor:move;
 }
-.project-icon img {width:48px;height:48px;}
-.project-icon span {display:block;font-size:12px;}
+
+.close-btn{
+    background:#c72015;
+    padding:2px 8px;
+    cursor:pointer;
+    border:1px solid white;
+    border-radius:3px;
+}
+
+.window-content{
+    padding:15px;
+}
+
+.window-notepad .window-content{
+    background:white;
+    padding:0;
+}
+
+.notepad-area{
+    width:100%;
+    height:250px;
+    border:none;
+    outline:none;
+    font-family:monospace;
+    font-size:13px;
+    padding:5px;
+    box-sizing:border-box;
+}
+
+.project-icon{
+    display:inline-block;
+    width:60px;
+    margin:5px;
+    text-align:center;
+    cursor:pointer;
+}
+.project-icon img{
+    width:48px;
+    height:48px;
+}
+.project-icon span{
+    display:block;
+    font-size:12px;
+    color:black;
+}
 </style>
 </head>
+
 <body>
 
-<div id="bootScreen">
-    <p></p>
-</div>
+<div id="bootScreen"></div>
 
 <div id="desktop">
     <div class="selection-box" id="selectionBox"></div>
 </div>
 
-<div class="taskbar" id="taskbar">
+<div id="startMenu" class="start-menu">
+    <div class="start-header">Administrator</div>
+    <div class="menu-item" onclick="openWindow('window0');closeStartMenu();playClickSound()">Info</div>
+    <div class="menu-item" onclick="openWindow('window1');loadProjects('window1');closeStartMenu();playClickSound()">Projects</div>
+    <div class="menu-item" onclick="openWindow('window2');closeStartMenu();playClickSound()">Notepad</div>
+</div>
+
+<div class="taskbar">
     <div class="start-btn" id="startBtn">Start</div>
     <div class="clock" id="clock"></div>
 </div>
 
 <audio id="clickAudio" src="Sounds/click.mp3" preload="auto"></audio>
-<audio id="bootAudio" src="Sounds/BootSound.mp3" preload="auto"></audio>
 
 <script>
-let zIndexCounter = 10;
-const desktop = document.getElementById("desktop");
-const bootScreen = document.getElementById("bootScreen");
-const clickAudio = document.getElementById("clickAudio");
-const bootAudio = document.getElementById("bootAudio");
-
-window.addEventListener("load", () => {
-    setTimeout(() => {
-        bootAudio.play().catch(() => console.log("Autoplay prevented"));
-        bootScreen.style.opacity = 0;
-        setTimeout(() => {
-            bootScreen.style.display = "none";
-        }, 1000);
-    }, 1000);
+window.addEventListener("load",()=>{
+    const boot=document.getElementById("bootScreen");
+    setTimeout(()=>{
+        boot.style.opacity="0";
+        setTimeout(()=>boot.remove(),1000);
+    },2000);
 });
 
-const folders = [
-    {name:"Info", content:"<p>Welcome, this site is to show my latest projects!</p>"},
-    {name:"Projects", content:""}
+let zIndexCounter=10;
+let clockClicks=0;
+let bubblesActive=false;
+
+const desktop=document.getElementById("desktop");
+const selectionBox=document.getElementById("selectionBox");
+const startMenu=document.getElementById("startMenu");
+const startBtn=document.getElementById("startBtn");
+const clock=document.getElementById("clock");
+const clickAudio=document.getElementById("clickAudio");
+
+function playClickSound(){
+    const clone=clickAudio.cloneNode();
+    clone.volume=0.4;
+    clone.playbackRate=0.95+Math.random()*0.1;
+    clone.play().catch(()=>{});
+}
+
+function openStartMenu(){
+    startMenu.classList.add("open");
+    startBtn.classList.add("active");
+}
+function closeStartMenu(){
+    startMenu.classList.remove("open");
+    startBtn.classList.remove("active");
+}
+startBtn.onclick=(e)=>{
+    e.stopPropagation();
+    startMenu.classList.contains("open")?closeStartMenu():openStartMenu();
+    playClickSound();
+};
+document.addEventListener("click",e=>{
+    if(!startMenu.contains(e.target)&&!startBtn.contains(e.target)){
+        closeStartMenu();
+    }
+});
+
+const folders=[
+    {name:"Info",icon:"Icons/folder.png",content:"Welcome to my first website! This site is to show my latest projects and my HTML skills, I hope you like it!"},
+    {name:"Projects",icon:"Icons/folder.png",content:""},
+    {name:"Notepad",icon:"Icons/notepad.png",content:"<textarea class='notepad-area'>I dare you to press the time 10 times!</textarea>",notepad:true}
 ];
 
-folders.forEach((folder,index)=>{
-    const id = "window"+index;
-    const icon = document.createElement("div");
-    icon.className = "icon";
-    icon.innerHTML = `<img src="Icons/folder.png"><span>${folder.name}</span>`;
-    icon.onclick = () => {
-        openWindow(id); playClickSound();
-        if(folder.name==="Projects") loadProjects(id);
+folders.forEach((f,i)=>{
+    const id="window"+i;
+    const icon=document.createElement("div");
+    icon.className="icon";
+    icon.innerHTML=`<img src="${f.icon}"><span>${f.name}</span>`;
+    icon.onclick=()=>{
+        openWindow(id);
+        if(f.name==="Projects") loadProjects(id);
+        playClickSound();
     };
     desktop.appendChild(icon);
 
-    const win = document.createElement("div");
-    win.className = "window";
-    win.id = id;
-    win.innerHTML = `<div class="title-bar">${folder.name}<div class="close-btn">X</div></div>
-                     <div class="window-content" id="${id}-content">${folder.content}</div>`;
+    const win=document.createElement("div");
+    win.className="window"+(f.notepad?" window-notepad":"");
+    win.id=id;
+    win.innerHTML=`
+        <div class="title-bar">
+            ${f.name}
+            <div class="close-btn">X</div>
+        </div>
+        <div class="window-content" id="${id}-content">${f.content}</div>`;
     document.body.appendChild(win);
-    win.querySelector(".close-btn").onclick = () => { closeWindow(id); playClickSound(); };
+
+    win.querySelector(".close-btn").onclick=()=>{
+        closeWindow(id);
+        playClickSound();
+    };
+
     makeDraggable(win);
 });
 
-const projects = [
-    {name:"Pixel Monkeys", icon:"Icons/pixel_monkeys.png", content:"<p>PixelMonkeys, my main project you can find it on the meta store!</p>"},
-    {name:"this is not a Rick Roll", icon:"Icons/rick.png", content:"<p>Never gonna give you up, Never gonna let you down, Never gonna run around and desert you...</p>"}
+const projects=[
+    {name:"Pixel Monkeys",icon:"Icons/pixel_monkeys.png",content:"PixelMonkeys is my main project, it is a VR game that uses gorilla locomotion, it's free on the Meta store!"},
+    {name:"this is not a Rick Roll",icon:"Icons/rick.png",content:"Never gonna give you up..."}
 ];
 
-function loadProjects(windowId){
-    const container = document.getElementById(`${windowId}-content`);
-    container.innerHTML = "";
-    projects.forEach(proj => {
-        const div = document.createElement("div");
-        div.className = "project-icon";
-        div.innerHTML = `<img src="${proj.icon}"><span>${proj.name}</span>`;
-        div.onclick = () => openProjectWindow(proj);
+function loadProjects(id){
+    const container=document.getElementById(id+"-content");
+    container.innerHTML="";
+    projects.forEach(p=>{
+        const div=document.createElement("div");
+        div.className="project-icon";
+        div.innerHTML=`<img src="${p.icon}"><span>${p.name}</span>`;
+        div.onclick=()=>{
+            openProjectWindow(p);
+            playClickSound();
+        };
         container.appendChild(div);
     });
 }
 
-function openProjectWindow(proj){
-    const winId = "project-"+proj.name.replace(/\s/g,'');
-    let win = document.getElementById(winId);
+function openProjectWindow(p){
+    const winId="proj-"+p.name.replace(/\s/g,'');
+    let win=document.getElementById(winId);
     if(!win){
-        win = document.createElement("div");
-        win.className = "window";
-        win.id = winId;
-        win.innerHTML = `<div class="title-bar">${proj.name}<div class="close-btn">X</div></div>
-                         <div class="window-content">${proj.content}</div>`;
+        win=document.createElement("div");
+        win.className="window";
+        win.id=winId;
+        win.innerHTML=`
+            <div class="title-bar">
+                ${p.name}
+                <div class="close-btn">X</div>
+            </div>
+            <div class="window-content">${p.content}</div>`;
         document.body.appendChild(win);
-        win.querySelector(".close-btn").onclick = ()=>{ closeWindow(winId); playClickSound(); };
+
+        win.querySelector(".close-btn").onclick=()=>{
+            closeWindow(winId);
+            playClickSound();
+        };
+
         makeDraggable(win);
     }
-    win.style.display = "block";
-    bringToFront(win);
-    playClickSound();
+    win.style.display="block";
+    win.style.zIndex=++zIndexCounter;
 }
 
-document.getElementById("startBtn").onclick = () => {
-    alert("Start menu coming soon!");
-    playClickSound();
-};
-
-function playClickSound(){
-    const clone = clickAudio.cloneNode();
-    clone.playbackRate = 0.9 + Math.random()*0.2;
-    clone.volume = 0.4;
-    clone.play();
+function openWindow(id){
+    const w=document.getElementById(id);
+    w.style.display="block";
+    w.style.zIndex=++zIndexCounter;
+}
+function closeWindow(id){
+    document.getElementById(id).style.display="none";
 }
 
-const selectionBox = document.getElementById("selectionBox");
-let startX, startY, isSelecting = false;
+function makeDraggable(win){
+    const bar=win.querySelector(".title-bar");
+    let offsetX=0,offsetY=0,dragging=false;
 
-desktop.addEventListener("mousedown",(e)=>{
+    bar.addEventListener("mousedown",(e)=>{
+        dragging=true;
+        offsetX=e.clientX-win.offsetLeft;
+        offsetY=e.clientY-win.offsetTop;
+        win.style.zIndex=++zIndexCounter;
+    });
+
+    document.addEventListener("mousemove",(e)=>{
+        if(!dragging) return;
+        win.style.left=e.clientX-offsetX+"px";
+        win.style.top=e.clientY-offsetY+"px";
+    });
+
+    document.addEventListener("mouseup",()=>dragging=false);
+}
+
+let startX,startY,isSelecting=false;
+
+desktop.addEventListener("mousedown",e=>{
     if(e.target!==desktop) return;
     isSelecting=true;
-    startX=e.offsetX; startY=e.offsetY;
+    startX=e.offsetX;
+    startY=e.offsetY;
     selectionBox.style.left=startX+"px";
     selectionBox.style.top=startY+"px";
     selectionBox.style.width="0px";
     selectionBox.style.height="0px";
     selectionBox.style.display="block";
 });
-desktop.addEventListener("mousemove",(e)=>{
+desktop.addEventListener("mousemove",e=>{
     if(!isSelecting) return;
-    const currentX = e.offsetX, currentY = e.offsetY;
-    const width = currentX-startX, height=currentY-startY;
-    selectionBox.style.width = Math.abs(width)+"px";
-    selectionBox.style.height = Math.abs(height)+"px";
-    selectionBox.style.left = (width<0?currentX:startX)+"px";
-    selectionBox.style.top = (height<0?currentY:startY)+"px";
+    const w=e.offsetX-startX;
+    const h=e.offsetY-startY;
+    selectionBox.style.width=Math.abs(w)+"px";
+    selectionBox.style.height=Math.abs(h)+"px";
+    selectionBox.style.left=(w<0?e.offsetX:startX)+"px";
+    selectionBox.style.top=(h<0?e.offsetY:startY)+"px";
 });
-desktop.addEventListener("mouseup",()=>{ isSelecting=false; selectionBox.style.display="none"; });
-
-function openWindow(id){ const win=document.getElementById(id); win.style.display="block"; bringToFront(win); }
-function closeWindow(id){ document.getElementById(id).style.display="none"; }
-function bringToFront(el){ zIndexCounter++; el.style.zIndex=zIndexCounter; }
-
-function makeDraggable(win){
-    const titleBar = win.querySelector(".title-bar");
-    let offsetX=0, offsetY=0, dragging=false;
-    titleBar.addEventListener("mousedown",(e)=>{
-        dragging=true; bringToFront(win);
-        offsetX = e.clientX - win.offsetLeft;
-        offsetY = e.clientY - win.offsetTop;
-    });
-    document.addEventListener("mousemove",(e)=>{ if(dragging){ win.style.left=(e.clientX-offsetX)+"px"; win.style.top=(e.clientY-offsetY)+"px"; }});
-    document.addEventListener("mouseup",()=>{ dragging=false; });
-}
+desktop.addEventListener("mouseup",()=>{
+    isSelecting=false;
+    selectionBox.style.display="none";
+});
 
 function updateClock(){
-    const now = new Date();
-    document.getElementById("clock").innerText = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    const now=new Date();
+    clock.innerText=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 }
 setInterval(updateClock,1000);
 updateClock();
+
+clock.onclick=()=>{
+    clockClicks++;
+    if(clockClicks>=10 && !bubblesActive){
+        clockClicks=0;
+        spawnBubbles();
+        playClickSound();
+    }
+};
+
+function spawnBubbles(){
+    if(bubblesActive) return; 
+    bubblesActive = true;
+    const size = 60; 
+    const bubbles = [];
+
+    for(let i = 0; i < 10; i++){
+        const b = document.createElement("img");
+        b.src = "Icons/bubble.png";
+        b.style.position = "fixed";
+        b.style.width = size + "px";
+        b.style.zIndex = 9999;
+        b.style.pointerEvents = "none"; 
+        document.body.appendChild(b);
+
+        bubbles.push({
+            el: b,
+            x: Math.random() * (window.innerWidth - size),
+            y: Math.random() * (window.innerHeight - size),
+            dx: (Math.random() - 0.5) * 6, 
+            dy: (Math.random() - 0.5) * 6  
+        });
+    }
+
+    function animate(){
+        if(!bubblesActive) return;
+
+        bubbles.forEach(b => {
+            b.x += b.dx;
+            b.y += b.dy;
+
+            
+            if(b.x <= 0 || b.x >= window.innerWidth - size) b.dx *= -1;
+            if(b.y <= 0 || b.y >= window.innerHeight - size) b.dy *= -1;
+
+            
+            bubbles.forEach(o => {
+                if(b !== o){
+                    const dist = Math.hypot(b.x - o.x, b.y - o.y);
+                    if(dist < size){
+                        
+                        [b.dx, o.dx] = [o.dx, b.dx];
+                        [b.dy, o.dy] = [o.dy, b.dy];
+                        
+                        
+                        b.x += b.dx;
+                        b.y += b.dy;
+                    }
+                }
+            });
+
+            b.el.style.left = b.x + "px";
+            b.el.style.top = b.y + "px";
+        });
+
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    
+    setTimeout(() => {
+        bubblesActive = false;
+        bubbles.forEach(b => {
+            b.el.style.transition = "opacity 0.5s, transform 0.5s";
+            b.el.style.opacity = "0";
+            b.el.style.transform = "scale(1.5)";
+            setTimeout(() => b.el.remove(), 500);
+        });
+    }, 10000);
+}
+
+    function animate(){
+        bubbles.forEach(b=>{
+            b.x+=b.dx;
+            b.y+=b.dy;
+
+            if(b.x<=0||b.x>=innerWidth-size) b.dx*=-1;
+            if(b.y<=0||b.y>=innerHeight-size) b.dy*=-1;
+
+            bubbles.forEach(o=>{
+                if(b!==o && Math.hypot(b.x-o.x,b.y-o.y)<size){
+                    b.dx*=-1; b.dy*=-4;
+                }
+            });
+
+            b.el.style.left=b.x+"px";
+            b.el.style.top=b.y+"px";
+        });
+
+        if(bubblesActive) requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    setTimeout(()=>{
+        bubblesActive=false;
+        bubbles.forEach(b=>b.el.remove());
+    },10000);
 </script>
 
 </body>
