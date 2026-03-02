@@ -205,6 +205,68 @@ body{
     font-size:12px;
     color:black;
 }
+
+
+.ms-container {
+    background: #bdbdbd;
+    padding: 6px;
+    border: 3px outset #eee;
+    display: inline-block;
+    margin: 0 auto;
+}
+.ms-header {
+    background: #bdbdbd;
+    border: 2px inset #eee;
+    padding: 4px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.ms-digit {
+    background: black;
+    color: #ff0000;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    font-size: 22px;
+    padding: 2px 5px;
+    border: 1px inset #555;
+    min-width: 40px;
+    text-align: center;
+}
+.ms-face {
+    width: 30px;
+    height: 30px;
+    border: 2px outset #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    cursor: pointer;
+    background: #bdbdbd;
+}
+.ms-face:active { border: 2px inset #eee; }
+.ms-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 24px);
+    grid-gap: 1px;
+    border: 2px inset #eee;
+    background-color: #7b7b7b;
+}
+.ms-cell {
+    width: 24px;
+    height: 24px;
+    background: #bdbdbd;
+    border: 2px outset #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+}
+.ms-cell.revealed { border: 1px solid #7b7b7b; background: #bdbdbd; }
+.ms-cell.mine-hit { background-color: red; }
 </style>
 </head>
 
@@ -221,6 +283,7 @@ body{
     <div class="menu-item" onclick="openWindow('window0');closeStartMenu();playClickSound()">Info</div>
     <div class="menu-item" onclick="openWindow('window1');loadProjects('window1');closeStartMenu();playClickSound()">Projects</div>
     <div class="menu-item" onclick="openWindow('window2');closeStartMenu();playClickSound()">Notepad</div>
+    <div class="menu-item" onclick="openWindow('window3');initMinesweeper();closeStartMenu();playClickSound()">Minesweeper</div>
 </div>
 
 <div class="taskbar">
@@ -279,7 +342,8 @@ document.addEventListener("click",e=>{
 const folders=[
     {name:"Info",icon:"Icons/folder.png",content:"Welcome to my first website! This site is to show my latest projects and my HTML skills, I hope you like it!"},
     {name:"Projects",icon:"Icons/folder.png",content:""},
-    {name:"Notepad",icon:"Icons/Notepad.png",content:"<textarea class='notepad-area'>I dare you to press the time 10 times!</textarea>",notepad:true}
+    {name:"Notepad",icon:"Icons/Notepad.png",content:"<textarea class='notepad-area'>I dare you to press the time 10 times!</textarea>",notepad:true},
+    {name:"Minesweeper",icon:"Icons/MineSweeper.png",content:"<div id='ms-root'></div>",ms:true}
 ];
 
 folders.forEach((f,i)=>{
@@ -290,6 +354,7 @@ folders.forEach((f,i)=>{
     icon.onclick=()=>{
         openWindow(id);
         if(f.name==="Projects") loadProjects(id);
+        if(f.name==="Minesweeper") initMinesweeper();
         playClickSound();
     };
     desktop.appendChild(icon);
@@ -377,6 +442,7 @@ function makeDraggable(win){
         offsetX=e.clientX-win.offsetLeft;
         offsetY=e.clientY-win.offsetTop;
         win.style.zIndex=++zIndexCounter;
+        e.preventDefault(); 
     });
 
     document.addEventListener("mousemove",(e)=>{
@@ -388,8 +454,78 @@ function makeDraggable(win){
     document.addEventListener("mouseup",()=>dragging=false);
 }
 
-let startX,startY,isSelecting=false;
 
+let msGrid=[], msTimer=0, msInt=null, msOver=false, msFlags=0;
+const msR=10, msC=10, msM=12;
+
+function initMinesweeper(){
+    clearInterval(msInt); msTimer=0; msOver=false; msFlags=0; msInt=null;
+    const cont=document.getElementById("window3-content");
+    cont.style.textAlign = "center";
+    cont.innerHTML=`<div class="ms-container"><div class="ms-header"><div class="ms-digit" id="ms-mine-count">012</div><div class="ms-face" id="ms-face" onclick="initMinesweeper()">☺︎</div><div class="ms-digit" id="ms-timer">000</div></div><div id="ms-grid" class="ms-grid"></div></div>`;
+    const gridEl=document.getElementById("ms-grid");
+    gridEl.oncontextmenu=e=>e.preventDefault();
+    msGrid=[];
+    for(let r=0;r<msR;r++){
+        msGrid[r]=[];
+        for(let c=0;c<msC;c++){
+            const cell=document.createElement("div");
+            cell.className="ms-cell";
+            cell.onclick=()=>reveal(r,c);
+            cell.oncontextmenu=e=>{e.preventDefault();flag(r,c);};
+            gridEl.appendChild(cell);
+            msGrid[r][c]={mine:false,rev:false,flg:false,cnt:0,el:cell};
+        }
+    }
+    let p=0; while(p<msM){
+        let rr=Math.floor(Math.random()*msR), cc=Math.floor(Math.random()*msC);
+        if(!msGrid[rr][cc].mine){msGrid[rr][cc].mine=true; p++;}
+    }
+    for(let r=0;r<msR;r++){
+        for(let c=0;c<msC;c++){
+            if(!msGrid[r][c].mine){
+                let ct=0;
+                for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)if(msGrid[r+i]&&msGrid[r+i][c+j]&&msGrid[r+i][c+j].mine)ct++;
+                msGrid[r][c].cnt=ct;
+            }
+        }
+    }
+}
+
+function reveal(r,c){
+    if(msOver||!msGrid[r]||!msGrid[r][c]||msGrid[r][c].rev||msGrid[r][c].flg)return;
+    if(!msInt)msInt=setInterval(()=>{msTimer++;document.getElementById("ms-timer").innerText=String(Math.min(msTimer,999)).padStart(3,'0');},1000);
+    const cell=msGrid[r][c]; cell.rev=true; cell.el.classList.add("revealed"); cell.el.style.border="1px solid #7b7b7b";
+    if(cell.mine){
+        cell.el.classList.add("mine-hit"); cell.el.innerText="☼"; endGame(false); return;
+    }
+    if(cell.cnt>0){
+        cell.el.innerText=cell.cnt;
+        const colors=["","blue","green","red","darkblue","brown","teal","black","gray"];
+        cell.el.style.color=colors[cell.cnt];
+    }else{
+        for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)reveal(r+i,c+j);
+    }
+    if(msGrid.flat().filter(x=>!x.mine&&!x.rev).length===0) endGame(true);
+}
+
+function flag(r,c){
+    if(msOver||msGrid[r][c].rev)return;
+    const cell=msGrid[r][c]; cell.flg=!cell.flg;
+    msFlags+=cell.flg?1:-1;
+    cell.el.innerText=cell.flg?"⚐":"";
+    document.getElementById("ms-mine-count").innerText=String(Math.max(msM-msFlags,0)).padStart(3,'0');
+    playClickSound();
+}
+
+function endGame(win){
+    msOver=true; clearInterval(msInt);
+    document.getElementById("ms-face").innerText=win?"☆":"☻";
+    msGrid.flat().forEach(cell=>{if(cell.mine){cell.el.innerText="☼"; cell.el.classList.add("revealed");}});
+}
+
+
+let startX,startY,isSelecting=false;
 desktop.addEventListener("mousedown",e=>{
     if(e.target!==desktop) return;
     isSelecting=true;
@@ -410,7 +546,7 @@ desktop.addEventListener("mousemove",e=>{
     selectionBox.style.left=(w<0?e.offsetX:startX)+"px";
     selectionBox.style.top=(h<0?e.offsetY:startY)+"px";
 });
-desktop.addEventListener("mouseup",()=>{
+document.addEventListener("mouseup",()=>{
     isSelecting=false;
     selectionBox.style.display="none";
 });
@@ -461,21 +597,15 @@ function spawnBubbles(){
         bubbles.forEach(b => {
             b.x += b.dx;
             b.y += b.dy;
-
-            
             if(b.x <= 0 || b.x >= window.innerWidth - size) b.dx *= -1;
             if(b.y <= 0 || b.y >= window.innerHeight - size) b.dy *= -1;
 
-            
             bubbles.forEach(o => {
                 if(b !== o){
                     const dist = Math.hypot(b.x - o.x, b.y - o.y);
                     if(dist < size){
-                        
                         [b.dx, o.dx] = [o.dx, b.dx];
                         [b.dy, o.dy] = [o.dy, b.dy];
-                        
-                        
                         b.x += b.dx;
                         b.y += b.dy;
                     }
@@ -488,10 +618,8 @@ function spawnBubbles(){
 
         requestAnimationFrame(animate);
     }
-
     animate();
 
-    
     setTimeout(() => {
         bubblesActive = false;
         bubbles.forEach(b => {
@@ -502,34 +630,6 @@ function spawnBubbles(){
         });
     }, 10000);
 }
-
-    function animate(){
-        bubbles.forEach(b=>{
-            b.x+=b.dx;
-            b.y+=b.dy;
-
-            if(b.x<=0||b.x>=innerWidth-size) b.dx*=-1;
-            if(b.y<=0||b.y>=innerHeight-size) b.dy*=-1;
-
-            bubbles.forEach(o=>{
-                if(b!==o && Math.hypot(b.x-o.x,b.y-o.y)<size){
-                    b.dx*=-1; b.dy*=-4;
-                }
-            });
-
-            b.el.style.left=b.x+"px";
-            b.el.style.top=b.y+"px";
-        });
-
-        if(bubblesActive) requestAnimationFrame(animate);
-    }
-
-    animate();
-
-    setTimeout(()=>{
-        bubblesActive=false;
-        bubbles.forEach(b=>b.el.remove());
-    },10000);
 </script>
 
 </body>
